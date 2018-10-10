@@ -13,6 +13,7 @@ class Subject < ApplicationRecord
   validates :url, presence: true, uniqueness: true
 
   after_update :sync_involved_users
+  after_save :push_to_channels
 
   def author_url
     "#{Octobox.config.github_domain}#{author_url_path}"
@@ -76,6 +77,10 @@ class Subject < ApplicationRecord
     if subject
       subject.update({status: status})
     end
+  end
+
+  def push_to_channels
+    notifications.find_each(&:push_to_channel)
   end
 
   private

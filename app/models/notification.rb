@@ -34,6 +34,8 @@ class Notification < ApplicationRecord
   validates :subject_url, presence: true
   validates :archived, inclusion: [true, false]
 
+  after_update :push_to_channel
+
   paginates_per 20
 
   class << self
@@ -154,5 +156,10 @@ class Notification < ApplicationRecord
   def upgrade_required?
     return nil unless repository.present?
     repository.private? && !repository.required_plan_available?
+  end
+
+  def push_to_channel
+    string = ApplicationController.render(partial: 'notifications/notification', locals: { notification: self})
+    ActionCable.server.broadcast "notifications:#{user_id}", { id: "#notification-#{id}", html: string }
   end
 end
