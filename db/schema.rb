@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_10_05_090055) do
+ActiveRecord::Schema.define(version: 2018_10_12_132332) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
@@ -36,6 +36,16 @@ ActiveRecord::Schema.define(version: 2018_10_05_090055) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "permission_statuses"
+  end
+
+  create_table "comments", force: :cascade do |t|
+    t.integer "subject_id"
+    t.bigint "github_id"
+    t.string "author"
+    t.string "author_association"
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "labels", force: :cascade do |t|

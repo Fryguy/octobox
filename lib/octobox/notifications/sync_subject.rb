@@ -63,11 +63,29 @@ module Octobox
         end
 
         update_labels(remote_subject)
+        update_comments if Octobox.include_comments?
 
         subject&.update_status
       end
 
       private
+
+      def update_comments
+        case subject_type
+        when *SUBJECT_TYPE_ISSUE_REQUEST.values
+          remote_comments = download_comments
+          return unless remote_comments.present?
+          remote_comments.each do |remote_comment|
+            subject.comments.find_or_create_by(github_id: remote_comment.id) do |comment|
+              comment.author = remote_comment.user.login
+              comment.body = remote_comment.body
+              comment.author_association = remote_comment.author_association
+              comment.created_at = remote_comment.created_at
+              comment.save
+            end
+          end
+        end
+      end
 
       def update_labels(remote_subject)
         case subject_type
@@ -87,6 +105,13 @@ module Octobox
       # end up blocking other syncs
       rescue Octokit::ClientError => e
         Rails.logger.warn("\n\n\033[32m[#{Time.current}] WARNING -- #{e.message}\033[0m\n\n")
+        nil
+      end
+
+      def download_comments
+        user.subject_client.get(subject_url.gsub('/pulls/', '/issues/') + '/comments')
+      rescue Octokit::ClientError => e
+        Rails.logger.warn("\n\n\033[32m[#{Time.now}] WARNING -- #{e.message}\033[0m\n\n")
         nil
       end
     end
